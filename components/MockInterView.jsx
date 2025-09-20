@@ -10,8 +10,8 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
 export default function MockInterView() {
-   const { data: session, status } = useSession();
-      const router = useRouter();
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [recording, setRecording] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [audioUrl, setAudioUrl] = useState(null);
@@ -30,56 +30,74 @@ export default function MockInterView() {
   const recognitionRef = useRef(null);
   const streamRef = useRef(null);
 
-   useEffect(() => {
-      if (status !== 'loading' && !session) {
-        router.push('/');
-      }
-    }, [session, status, router]);
+  useEffect(() => {
+    if (status !== 'loading' && !session) {
+      router.push('/');
+    }
+  }, [session, status, router]);
 
   // Load history from IndexedDB on mount
+  // Load history from IndexedDB on mount
+ const loadHistoryMock = async () => {
+   try {
+     const db = await getDB();
+     if (!db.objectStoreNames.contains('historyMock')) {
+       setHistory([]);
+       console.log('historyMock store not found',history);
+       
+       return;
+     }
+
+     const tx = db.transaction('historyMock', 'readonly');
+     const store = tx.objectStore('historyMock');
+
+     const all = await store.getAll();
+     all.forEach((h) => {
+       if (h.audioBlob) h.audioUrl = URL.createObjectURL(h.audioBlob);
+     });
+
+     const sorted = all.sort((a, b) => b.id - a.id).slice(0, 3);
+     setHistory(sorted);
+     await tx.done;
+   } catch (err) {
+     console.error('loadHistoryMock error:', err);
+     setHistory([]);
+   }
+ };
+
+ const pushHistory = async (entry) => {
+   try {
+     const db = await getDB();
+     if (!db.objectStoreNames.contains('historyMock')) return;
+
+     const tx = db.transaction('historyMock', 'readwrite');
+     const store = tx.objectStore('historyMock');
+     
+     await store.put(entry);
+
+     const all = await store.getAll();
+     console.log('all after put',all);
+     
+     all.forEach((h) => {
+       if (h.audioBlob) h.audioUrl = URL.createObjectURL(h.audioBlob);
+     });
+
+     const sorted = all.sort((a, b) => b.id - a.id);
+     const latest = sorted.slice(0, 3);
+     setHistory(latest);
+
+     for (let i = 3; i < sorted.length; i++) {
+       await store.delete(sorted[i].id);
+     }
+
+     await tx.done;
+   } catch (err) {
+     console.error('pushHistoryMock error:', err);
+   }
+ };
   useEffect(() => {
-    (async () => {
-      const db = await getDB();
-      const tx = db.transaction('history', 'readonly');
-      const store = tx.objectStore('history');
-      const all = await store.getAll();
-
-      // newest first
-      const sorted = all.sort((a, b) => b.id - a.id).slice(0, 5);
-
-      // attach audio URLs
-      sorted.forEach((h) => {
-        if (h.audioBlob) {
-          h.audioUrl = URL.createObjectURL(h.audioBlob);
-        }
-      });
-
-      setHistory(sorted);
-    })();
+    loadHistoryMock();
   }, []);
-
-  // keep latest 5 entries in IndexedDB + state
-  const pushHistory = async (entry) => {
-    const db = await getDB();
-    const tx = db.transaction('history', 'readwrite');
-    const store = tx.objectStore('history');
-
-    await store.put(entry); // add new entry
-
-    const all = await store.getAll();
-    const sorted = all.sort((a, b) => b.id - a.id);
-
-    // trim to 5
-    const trimmed = sorted.slice(0, 3);
-    setHistory(trimmed);
-
-    // delete extras from IndexedDB
-    for (let i = 3; i < sorted.length; i++) {
-      await store.delete(sorted[i].id);
-    }
-
-    await tx.done;
-  };
 
   // Live speech recognition
   const startLiveRecognition = () => {
@@ -136,7 +154,8 @@ export default function MockInterView() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
-      const recorder = new MediaRecorder(stream);
+      const options = { mimeType: 'audio/mp4' }; // ✅ iPhone + Android compatible
+      const recorder = new MediaRecorder(stream, options);
       mediaRecorderRef.current = recorder;
       chunksRef.current = [];
 
@@ -150,14 +169,14 @@ export default function MockInterView() {
           recognitionRef.current?.stop();
         } catch {}
 
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        const blob = new Blob(chunksRef.current, { type: 'audio/mp4' });
         const url = URL.createObjectURL(blob);
         setAudioUrl(url);
 
         try {
           setProcessing(true);
           const fd = new FormData();
-          fd.append('audio', blob, 'interview.webm');
+          fd.append('audio', blob, 'interview.mp4'); // ✅ match blob type
 
           const res = await fetch('/api/mock-interview', {
             method: 'POST',
@@ -218,6 +237,7 @@ export default function MockInterView() {
     setRecording(false);
   };
 
+
   function downloadBlob(blob, filename) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -227,27 +247,30 @@ export default function MockInterView() {
     URL.revokeObjectURL(url);
   }
 
-   if (status === 'loading') {
-     return (
-       <div className='min-h-screen flex items-center justify-center'>
-         <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-primary'></div>
-       </div>
-     );
-   }
+  if (status === 'loading') {
+    return (
+      <div className='min-h-screen flex items-center justify-center'>
+        <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-primary'></div>
+      </div>
+    );
+  }
 
-   if (!session) {
-     return null; // Will redirect via useEffect
-   }
+  if (!session) {
+    return null; // Will redirect via useEffect
+  }
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 90 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className='dark:bg-gradient-to-b from-gray-900 via-gray-800 to-black pt-6 sm:pt-12 px-4 flex flex-col items-center p-6 text-white'
+      // className='dark:bg-gradient-to-b from-gray-900 via-gray-800 to-black min-h-screen justify-center px-4 flex flex-col items-center text-white '
+      className={`dark:bg-gradient-to-b from-gray-900 via-gray-800 to-black 
+              bg-white text-white px-4 flex flex-col items-center justify-center 
+              min-h-screen
+              ${history.length > 0 ? 'pt-12 pb-7' : 'pt-0 pb-0'}`}
     >
-      {/* Hero */}
-      <div className='text-center max-w-2xl mb-8 px-4'>
+      <div className='text-center max-w-2xl mb-10 px-4'>
         <h1 className='text-4xl font-bold mb-3 bg-gradient-to-r from-primary via-purple-500 to-chart-1 bg-clip-text text-transparent'>
           🎤 AI Mock Interview
         </h1>
@@ -256,7 +279,6 @@ export default function MockInterView() {
           your last 3 attempts.
         </p>
       </div>
-
       {/* Recording Card */}
       <div className='dark: bg-gradient-to-r from-primary via-purple-500 to-chart-1 rounded-2xl p-10 shadow-lg w-full max-w-2xl'>
         <div className='flex flex-col items-center space-y-6'>
@@ -285,26 +307,28 @@ export default function MockInterView() {
         </div>
       </div>
       {processing && <AiLoading />}
-
       {/* Live Transcript Panel */}
       <div className='mt-6 w-full max-w-2xl dark:bg-gradient-to-r from-primary via-purple-500 to-chart-1 rounded-lg p-5 shadow'>
         <h3 className='font-semibold dark:text-black mb-2'>Live Transcript</h3>
-        <p className='text-red-500 italic mb-2'>{liveInterim}</p>
+        <p className='text-black font-semibold'>{liveInterim}</p>
         <p className='text-black font-semibold'>{liveFinal}</p>
       </div>
-
       {/* Audio Player (current) */}
       {audioUrl && (
-        <motion.div className='mt-6 bg-gray-800/50 rounded-lg p-4 shadow w-full max-w-xl'>
+        <motion.div className='mt-6 bg-gray-900/80 rounded-lg p-4 shadow w-full max-w-2xl'>
           <div className='flex items-start justify-between gap-4'>
             <div className='flex-1'>
               <h4 className='text-sm text-gray-300 mb-2'>Your Recording</h4>
-              <audio controls src={audioUrl} className='w-full' />
+              <audio
+                controls
+                src={audioUrl}
+                onClick={(e) => e.currentTarget.play()}
+                className='w-full'
+              />
             </div>
           </div>
         </motion.div>
       )}
-
       {/* AI Feedback */}
       {result && result.success && (
         <motion.div
@@ -349,14 +373,13 @@ export default function MockInterView() {
             </p>
             <div className='mt-2'>
               <p className='font-bold text-red-500'>Corrected Transcript:</p>
-              <p className='pt-1 font-bold text-gray-200 dark:text-black'>
+              <p className='pt-1 font-bold text-gray-200 dark:text-green-500'>
                 {result.feedback.correctedTranscript}
               </p>
             </div>
           </div>
         </motion.div>
       )}
-
       {/* History Accordion (latest 5 only) */}
       {history.length > 0 && (
         <div className='mt-12 w-full max-w-2xl px-2'>
@@ -413,6 +436,7 @@ export default function MockInterView() {
                               <audio
                                 controls
                                 src={h.audioUrl}
+                                onClick={(e) => e.currentTarget.play()}
                                 className='w-full mt-2'
                               />
                               <button

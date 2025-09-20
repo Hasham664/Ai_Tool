@@ -149,7 +149,7 @@ const Footer = () => {
 
             <div className='flex items-center space-x-4'>
               <span className='text-sm text-gray-500 dark:text-gray-400'>
-                Built with ❤️ using React & Tailwind
+                Built with ❤️ using Next.Js Full Stack
               </span>
             </div>
           </div>
