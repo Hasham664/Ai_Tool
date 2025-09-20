@@ -5,6 +5,7 @@ import { Dashboard } from '@/components/dashboard';
 import { LoginPrompt } from '@/components/login-prompt';
 import { useEffect } from 'react';
 
+
 export default function HomePage() {
   const { data: session, status } = useSession();
 
