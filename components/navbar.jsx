@@ -18,6 +18,7 @@ import {
   Mic,
 } from 'lucide-react';
 
+
 export function Navbar() {
   const { data: session } = useSession();
   const pathname = usePathname();

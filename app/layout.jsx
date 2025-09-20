@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { AuthProvider } from '@/components/auth-provider';
 import { ThemeProvider } from '@/components/theme-provider';
-import { Navbar } from '@/components/Navbar';
+import { Navbar } from '@/components/navbar';
 import { ChatbotWidget } from '@/components/chatbot-widget';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/react';
