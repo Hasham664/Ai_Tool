@@ -153,7 +153,7 @@ export default function RootLayout({ children }) {
                 <main className='flex-1' role='main'>
                   {children}
                 </main>
-                      <Footer />
+                <Footer />
                 
               </div>
               <ChatbotWidget />

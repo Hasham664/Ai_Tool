@@ -7,7 +7,6 @@ import { Brain, FileText, MessageSquare, Sparkles } from "lucide-react"
 import UserCountsCards from "./UserCountsCards"
 import FAQ from "./FAQ"
 import { motion } from "framer-motion"
-import Footer from "./footer"
 export function LoginPrompt() {
   
   return (
@@ -148,7 +147,6 @@ export function LoginPrompt() {
       <div className='pb-16 max-sm:px-4 '>
         <FAQ />
       </div>
-        {/* <Footer /> */}
       
     </div>
   );
