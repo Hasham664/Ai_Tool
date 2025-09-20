@@ -6,7 +6,7 @@ import { ChatbotWidget } from '@/components/chatbot-widget';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/react';
 import './globals.css';
-import Footer from '@/components/footer';
+import Footer from '@/components/Footer';
 
 const geistSans = Geist({
   subsets: ['latin'],
