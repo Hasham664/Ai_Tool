@@ -267,8 +267,8 @@ export default function MockInterView() {
       // className='dark:bg-gradient-to-b from-gray-900 via-gray-800 to-black min-h-screen justify-center px-4 flex flex-col items-center text-white '
       className={`dark:bg-gradient-to-b from-gray-900 via-gray-800 to-black 
               bg-white text-white px-4 flex flex-col items-center justify-center 
-              min-h-screen
-              ${history.length > 0 ? 'pt-12 pb-7' : 'pt-0 pb-0'}`}
+              sm:min-h-screen max-sm:pt-12 max-sm:pb-7
+              ${history.length > 0 ? 'sm:pt-12 pb-7' : 'sm:pt-0 pb-0'}`}
     >
       <div className='text-center max-w-2xl mb-10 px-4'>
         <h1 className='text-4xl font-bold mb-3 bg-gradient-to-r from-primary via-purple-500 to-chart-1 bg-clip-text text-transparent'>
