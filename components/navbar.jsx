@@ -21,6 +21,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export function Navbar() {
   const { data: session } = useSession();
+  // 1️⃣ Add this state near the other useState hooks
+  const [loading, setLoading] = useState(false);
+
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -125,12 +128,25 @@ export function Navbar() {
                 </Button>
               </div>
             ) : (
+              // 2️⃣ Replace JUST this button
               <Button
-                onClick={() => signIn('google')}
+                onClick={() => {
+                  setLoading(true); // start loading
+                  signIn('google');
+                }}
+                disabled={loading} // prevent double-click
                 className='bg-gradient-to-r from-primary to-chart-1 hover:from-primary/90 hover:to-chart-1/90 cursor-pointer'
               >
-                <span className='hidden sm:inline'>Sign In with Google</span>
-                <span className='sm:hidden'>Sign In</span>
+                {loading ? (
+                  <span>Please wait…</span>
+                ) : (
+                  <>
+                    <span className='hidden sm:inline'>
+                      Sign In with Google
+                    </span>
+                    <span className='sm:hidden'>Sign In</span>
+                  </>
+                )}
               </Button>
             )}
           </div>

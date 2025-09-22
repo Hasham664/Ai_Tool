@@ -7,8 +7,14 @@ import { Brain, FileText, MessageSquare, Sparkles } from "lucide-react"
 import UserCountsCards from "./UserCountsCards"
 import FAQ from "./FAQ"
 import { motion } from "framer-motion"
+import { useState } from "react"
 export function LoginPrompt() {
-  
+   const [loading, setLoading] = useState(false); // ← add this
+
+   const handleGoogleSignIn = async () => {
+     setLoading(true); // show “please wait”
+     await signIn('google');
+   };
   return (
     <div>
       <div className='min-h-[calc(100vh-4rem)] flex items-center justify-center p-4 overflow-y-hidden'>
@@ -127,10 +133,13 @@ export function LoginPrompt() {
           >
             <Button
               size='lg'
-              onClick={() => signIn('google')}
+              onClick={handleGoogleSignIn} 
+              disabled={loading}
               className='bg-gradient-to-r from-primary to-chart-1 hover:from-primary/90 hover:to-chart-1/90 text-lg px-8 py-3 cursor-pointer'
             >
-              Sign In with Google to Get Started
+              {loading
+                ? 'Please wait a sec…'
+                : ' Sign In with Google to Get Started'}
             </Button>
             <p className='text-sm text-muted-foreground'>
               Free to use • No credit card required • Secure Google
@@ -143,11 +152,10 @@ export function LoginPrompt() {
       <div className=' px-4 sm:px-8 pt-10 pb-6'>
         <UserCountsCards />
       </div>
-    
-      <div className='pb-16 max-sm:px-4 '>
+
+      <div className='pb-12 pt-6 max-sm:px-4 '>
         <FAQ />
       </div>
-      
     </div>
   );
 }
